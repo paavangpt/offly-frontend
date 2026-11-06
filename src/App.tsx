@@ -7,6 +7,19 @@ type User = { id: number; name: string; email: string; role: Role }
 type PageState = 'checking' | 'login' | 'ready'
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '')
+const DEMO_PASSWORD = 'OfflyDemo!2026'
+const demoUsers = [
+  { name: 'Harper Director', email: 'harper.hod@offly.test', role: 'HOD' },
+  { name: 'Morgan Manager', email: 'morgan.manager@offly.test', role: 'MANAGER' },
+  { name: 'Riley Manager', email: 'riley.manager@offly.test', role: 'MANAGER' },
+  { name: 'Alex Employee', email: 'alex.employee@offly.test', role: 'EMPLOYEE' },
+  { name: 'Blake Employee', email: 'blake.employee@offly.test', role: 'EMPLOYEE' },
+  { name: 'Casey Employee', email: 'casey.employee@offly.test', role: 'EMPLOYEE' },
+  { name: 'Drew Employee', email: 'drew.employee@offly.test', role: 'EMPLOYEE' },
+  { name: 'Emery Employee', email: 'emery.employee@offly.test', role: 'EMPLOYEE' },
+  { name: 'Finley Employee', email: 'finley.employee@offly.test', role: 'EMPLOYEE' },
+  { name: 'Gray Employee', email: 'gray.employee@offly.test', role: 'EMPLOYEE' },
+]
 const roles: Record<Role, { path: string; title: string; eyebrow: string; description: string; features: string[] }> = {
   EMPLOYEE: {
     path: '/dashboard', title: 'Your time,\nwell managed.', eyebrow: 'EMPLOYEE SPACE',
@@ -33,6 +46,7 @@ function App() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [demoEmail, setDemoEmail] = useState(demoUsers[3].email)
   const initialAuthCheckStarted = useRef(false)
 
   const routeUser = useCallback((nextUser: User, path = window.location.pathname) => {
@@ -66,12 +80,11 @@ function App() {
     return () => window.removeEventListener('popstate', onPopState)
   }, [user])
 
-  async function handleLogin(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function signIn(emailValue: string, passwordValue: string) {
     setError('')
     setBusy(true)
     try {
-      const authorization = `Basic ${btoa(`${email.trim()}:${password}`)}`
+      const authorization = `Basic ${btoa(`${emailValue.trim()}:${passwordValue}`)}`
       const response = await fetch(`${apiBase}/api/auth/login`, {
         method: 'POST', headers: { Authorization: authorization }, credentials: 'include',
       })
@@ -85,6 +98,11 @@ function App() {
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'We couldn’t sign you in. Please try again.')
     } finally { setBusy(false) }
+  }
+
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    await signIn(email, password)
   }
 
   async function handleLogout() {
@@ -143,6 +161,7 @@ function App() {
             {error && <p className="form-error" role="alert">{error}</p>}
             <button className="submit-button" type="submit" disabled={busy}><span>{busy ? 'Finding your space…' : 'Sign in'}</span><span className="submit-arrow">↗</span></button>
           </form>
+          <details className="demo-login"><summary>Try a demo account</summary><div className="demo-login-content"><label htmlFor="demo-account">Choose a user</label><div className="demo-login-controls"><select id="demo-account" value={demoEmail} onChange={(event) => setDemoEmail(event.target.value)}>{demoUsers.map((demoUser) => <option key={demoUser.email} value={demoUser.email}>{demoUser.name} · {demoUser.role}</option>)}</select><button type="button" className="demo-login-button" disabled={busy} onClick={() => void signIn(demoEmail, DEMO_PASSWORD)}>{busy ? 'Signing in…' : 'Sign in'} <span>↗</span></button></div><p>Local demo users · password filled in automatically</p></div></details>
           <div className="form-note"><span className="note-lock">⌑</span><span>Your sign-in is private and secure.</span><span className="note-rule" /></div>
           <p className="access-note">Need an account? <span>Ask your workspace administrator.</span></p>
         </div><footer className="form-footer"><span>© OFFLY 2026</span><span>TAKE YOUR TIME <i>✳</i></span></footer></section>
